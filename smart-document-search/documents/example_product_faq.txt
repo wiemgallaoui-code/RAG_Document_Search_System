@@ -1,0 +1,5 @@
+Sample corpus document (not runtime documentation)
+
+This file exists only as example text for future indexing or search tests. It is written like a short internal note, not like user-facing product copy.
+
+Planned capabilities later: scan documents/, build an index, return ranked matches for a query. Format support may start with UTF-8 .txt and expand if needed.

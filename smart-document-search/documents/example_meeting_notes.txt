@@ -1,0 +1,7 @@
+Project log — 2026-05-09
+
+Scope (current): Python package under app/, plain-text inputs under documents/, paths centralized in config. CLI entry via python -m app.main.
+
+Next: add ingestion and search modules, then wire them from main.
+
+Notes: keep dependencies listed in requirements.txt as libraries are added.
