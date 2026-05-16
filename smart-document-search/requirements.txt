@@ -1,2 +1,1 @@
-# Dependencies (pin versions when you add them).
-# Example: numpy==2.1.0
+scikit-learn==1.6.1
