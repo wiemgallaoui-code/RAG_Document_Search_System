@@ -31,7 +31,7 @@ class DocumentSearchEngine:
         corpus = [doc["processed_content"] for doc in processed_documents]
 
         # Step 1: turn each document into a TF-IDF vector.
-        self._matrix = self._vectorizer.fit_transform(corpus) 
+        self._matrix = self._vectorizer.fit_transform(corpus)
 
     def search(self, query: str, top_k: int = 3) -> list[dict[str, float | str]]:
         """Return the top_k documents most similar to the query."""

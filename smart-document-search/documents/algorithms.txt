@@ -1,0 +1,11 @@
+Algorithms and Data Structures — Study Notes
+
+Binary search works on sorted arrays and runs in O(log n) time. You repeatedly compare the target with the middle element and discard half of the remaining range.
+
+Quicksort is a divide-and-conquer sorting algorithm. Average time complexity is O(n log n), but worst case is O(n²) if pivots are chosen poorly. In practice it is often faster than mergesort because of good cache behavior.
+
+Breadth-first search (BFS) explores a graph layer by layer and is useful for finding the shortest path in unweighted graphs. Depth-first search (DFS) goes deep along one branch before backtracking and is handy for cycle detection or topological sorting.
+
+A hash table maps keys to buckets using a hash function. Collisions are handled with chaining (linked lists in each bucket) or open addressing (probing for the next free slot). Average lookup is O(1) if the load factor stays reasonable.
+
+Dynamic programming breaks problems into overlapping subproblems and stores results to avoid recomputation. Classic examples include the Fibonacci sequence, knapsack problem, and edit distance between two strings.

@@ -1,0 +1,13 @@
+Databases — Practical Overview
+
+A relational database stores data in tables with rows and columns. SQL is the standard language for querying: SELECT reads data, INSERT adds rows, UPDATE modifies rows, DELETE removes them.
+
+Primary keys uniquely identify a row. Foreign keys link tables and enforce referential integrity. JOIN combines rows from related tables — INNER JOIN keeps only matches, LEFT JOIN keeps all rows from the left table.
+
+Indexes speed up lookups on frequently filtered columns but slow down writes because the index must be maintained. Composite indexes cover multiple columns and help queries that filter on a prefix of those columns.
+
+ACID properties describe reliable transactions: Atomicity (all or nothing), Consistency (valid state), Isolation (concurrent sessions do not corrupt each other), Durability (committed data survives crashes).
+
+NoSQL databases trade strict schemas for flexibility. Document stores (MongoDB) store JSON-like documents. Key-value stores (Redis) excel at caching and fast lookups.
+
+Normalization reduces redundancy: first normal form removes repeating groups, higher forms address partial and transitive dependencies. Denormalization is sometimes used deliberately for read-heavy reporting.

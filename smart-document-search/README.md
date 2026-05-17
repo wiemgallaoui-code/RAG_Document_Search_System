@@ -1,29 +1,83 @@
 # Smart Document Search
 
-Work in progress: a small Python project for exploring document search over local text files. The repo currently provides layout, configuration, and sample inputs—**search is not implemented yet**.
+Small document search demo: load `.txt` files from `documents/`, preprocess text, rank with **TF-IDF** and **cosine similarity** (scikit-learn). Optional **FastAPI** exposes search over HTTP.
 
-## Repository layout
+## Layout
 
-- **`app/`** — Application code (`main` entry point, `config` for paths; add modules such as ingest/search as you go).
-- **`documents/`** — Plain-text sources (`.txt`) used for experiments; replace the samples with your own files as needed.
-- **`requirements.txt`** — Project dependencies; install with `pip install -r requirements.txt` when you add packages.
-- **`.gitignore`** — Excludes virtual environments, caches, local env files, and common IDE artifacts from version control.
+- **`app/`** — Loader, preprocessing, search engine, CLI (`main`), HTTP API (`api`)
+- **`documents/`** — UTF-8 `.txt` corpus (sample files included)
+- **`requirements.txt`** — Pinned dependencies
 
-## Run locally
+## Install
 
-From this directory (`smart-document-search`):
+From `smart-document-search`:
 
 ```bash
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+On macOS/Linux: `source .venv/bin/activate`
+
+## CLI demo
+
+```bash
 python -m app.main
 ```
 
-On macOS/Linux, activate with `source .venv/bin/activate` instead of the PowerShell line above.
+Or run the search module demo:
 
-Expected output: a short status line plus the resolved path to `documents/`.
+```bash
+python -m app.search_engine
+```
 
-## Roadmap
+## Run the API
 
-- Implement ingestion and search under `app/`, then connect them from `main.py`.
-- Pin dependency versions in `requirements.txt` once non-stdlib libraries are in use.
+```bash
+uvicorn app.api:app --reload
+```
+
+Server default: http://127.0.0.1:8000
+
+### API usage
+
+**Endpoint:** `GET /search`
+
+| Parameter | Meaning |
+|-----------|---------|
+| `q` | Search query (required) |
+| `top_k` | Max results (default `3`, max `50`) |
+
+**Example request**
+
+```http
+GET http://127.0.0.1:8000/search?q=python+indexing&top_k=2
+```
+
+**Example response**
+
+```json
+{
+  "query": "python indexing",
+  "top_results": [
+    {
+      "document": "example_meeting_notes.txt",
+      "similarity_score": 0.42
+    }
+  ]
+}
+```
+
+Interactive docs: http://127.0.0.1:8000/docs
+
+## Technologies
+
+- Python 3
+- FastAPI, Uvicorn
+- scikit-learn (`TfidfVectorizer`, cosine similarity)
+
+## Notes
+
+- README-style `.txt` files under `documents/` named like `README.txt` are skipped by the loader.
+- Empty or whitespace-only queries return `"top_results": []`.

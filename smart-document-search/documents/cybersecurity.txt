@@ -1,0 +1,13 @@
+Cybersecurity Basics
+
+Authentication verifies who you are (password, MFA, biometrics). Authorization decides what you are allowed to do after login. Confusing the two is a common design mistake.
+
+Hash passwords with a slow algorithm such as bcrypt or Argon2 — never store plain text. Salting adds unique random data per user so identical passwords do not produce identical hashes.
+
+HTTPS encrypts traffic between browser and server using TLS. Certificates bind a public key to a domain name. Mixed content (HTTP resources on HTTPS pages) weakens security.
+
+SQL injection happens when user input is concatenated into queries. Use parameterized queries or an ORM so the database treats input as data, not executable code.
+
+Cross-site scripting (XSS) injects malicious scripts into pages viewed by others. Mitigations include escaping output, Content-Security-Policy headers, and frameworks that auto-escape templates.
+
+Phishing tricks users into revealing credentials via fake emails or sites. Security awareness training and email filtering reduce risk. Report suspicious messages instead of clicking links.

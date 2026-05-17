@@ -1,7 +1,19 @@
-Project log — 2026-05-09
+Sprint review — Team Atlas — 2026-05-09
 
-Scope (current): Python package under app/, plain-text inputs under documents/, paths centralized in config. CLI entry via python -m app.main.
+Attendees: backend, frontend, QA
 
-Next: add ingestion and search modules, then wire them from main.
+Done this sprint:
+- Document upload API returns 201 with file id
+- Search endpoint returns ranked chunks with similarity scores
+- Basic rate limiting on /search (100 requests per minute per IP)
 
-Notes: keep dependencies listed in requirements.txt as libraries are added.
+Blockers:
+- Embedding model download is slow on first deploy; need caching in Docker image
+- German PDFs with umlauts sometimes break the tokenizer — preprocessing ticket opened
+
+Next sprint goals:
+- Add pagination to search results
+- Write integration tests for empty query and very long query strings
+- Update README with example curl commands for recruiters
+
+Action items: Maria documents API in OpenAPI; Jonas profiles memory usage on 10k documents.

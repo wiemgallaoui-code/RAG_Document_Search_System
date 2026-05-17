@@ -1,0 +1,13 @@
+Python Web Development with FastAPI
+
+FastAPI builds HTTP APIs in Python with automatic request validation via Pydantic models. Type hints improve editor support and catch errors early.
+
+A typical flow: define a path operation (@app.get), accept query parameters or a request body, call business logic, return JSON. Uvicorn is an ASGI server that runs the application.
+
+Dependency injection lets you share database connections or settings across routes without global variables. Lifespan events run code at startup (load models, connect to DB) and shutdown (close connections).
+
+Async endpoints (async def) help when waiting on I/O — external APIs, databases with async drivers. CPU-heavy work should run in a thread pool or worker process so it does not block the event loop.
+
+CORS middleware allows browser frontends on another origin to call your API during development. In production, restrict allowed origins instead of using wildcards.
+
+Testing: use TestClient from starlette to call routes without starting a real server. Check status codes and JSON bodies for search endpoints and error cases.

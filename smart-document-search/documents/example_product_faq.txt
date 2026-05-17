@@ -1,5 +1,16 @@
-Sample corpus document (not runtime documentation)
+Campus Library Search — Frequently Asked Questions
 
-This file exists only as example text for future indexing or search tests. It is written like a short internal note, not like user-facing product copy.
+Q: What file types can I search?
+A: The demo indexes plain text (.txt) files in the documents folder. PDF support is planned for a later release.
 
-Planned capabilities later: scan documents/, build an index, return ranked matches for a query. Format support may start with UTF-8 .txt and expand if needed.
+Q: How does ranking work?
+A: The system converts documents and your question into TF-IDF vectors, then ranks files by cosine similarity. Higher scores mean more overlapping important terms.
+
+Q: Why do I get no results?
+A: Your query might not share words with any document after preprocessing, or the query was empty. Try different keywords such as "neural network" or "SQL join".
+
+Q: Is my data sent to the cloud?
+A: This local demo runs entirely on your machine. No external API calls are made during search.
+
+Q: Can I add my own notes?
+A: Yes. Drop UTF-8 text files into the documents directory and restart the API server so the index is rebuilt.

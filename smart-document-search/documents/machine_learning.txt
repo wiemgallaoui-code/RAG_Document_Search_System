@@ -1,0 +1,13 @@
+Machine Learning — Core Concepts
+
+Supervised learning trains a model on labeled examples. Classification predicts discrete labels (spam vs not spam). Regression predicts continuous values (house price from features).
+
+Common algorithms include linear regression, logistic regression, decision trees, random forests, and support vector machines. Neural networks stack layers of neurons with non-linear activations and are the basis of deep learning.
+
+Training minimizes a loss function using gradient descent. Learning rate controls step size; too high causes divergence, too low slows convergence. Regularization (L1, L2) reduces overfitting by penalizing large weights.
+
+Cross-validation splits data into folds to estimate generalization performance. A hold-out test set should only be used once at the end, not for tuning hyperparameters during development.
+
+Feature scaling (standardization or min-max normalization) helps algorithms that are sensitive to magnitude, such as k-nearest neighbors and gradient-based methods.
+
+Unsupervised learning finds structure without labels: k-means clustering groups similar points, and PCA reduces dimensionality while preserving variance.
