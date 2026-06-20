@@ -1,83 +1,197 @@
-# Smart Document Search
+<p align="center">
+  <strong>RAG Document Assistant</strong><br>
+  Ask questions over your documents — retrieve with TF-IDF, answer with Groq LLM.
+</p>
 
-Small document search demo: load `.txt` files from `documents/`, preprocess text, rank with **TF-IDF** and **cosine similarity** (scikit-learn). Optional **FastAPI** exposes search over HTTP.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/scikit--learn-ML-FF7F0E?style=flat-square" alt="scikit-learn">
+  <img src="https://img.shields.io/badge/Groq-LLM-5B5EF4?style=flat-square" alt="Groq">
+</p>
 
-## Layout
+---
 
-- **`app/`** — Loader, preprocessing, search engine, CLI (`main`), HTTP API (`api`)
-- **`documents/`** — UTF-8 `.txt` corpus (sample files included)
-- **`requirements.txt`** — Pinned dependencies
+## About
 
-## Install
+**RAG Document Assistant** is a portfolio project that implements a full **Retrieval-Augmented Generation** pipeline in Python.
 
-From `smart-document-search`:
+You upload plain-text knowledge files, ask a question in natural language, and the system:
+
+1. **Retrieves** the most relevant documents using TF-IDF and cosine similarity
+2. **Generates** a grounded answer using the Groq LLM API
+3. **Cites** the source files with similarity scores
+
+Built to demonstrate skills in **Python**, **NLP retrieval**, **RAG architecture**, **REST APIs**, and **frontend integration**.
+
+<!-- Add a screenshot after taking one: save as docs/demo.png and uncomment the line below -->
+<!-- ![Demo](docs/demo.png) -->
+
+---
+
+## How it works
+
+```mermaid
+flowchart LR
+    A[User Question] --> B[Preprocess Query]
+    B --> C[TF-IDF Search]
+    C --> D[Top-K Documents]
+    D --> E[Groq LLM]
+    E --> F[Answer + Sources]
+```
+
+| Stage | Technology | What happens |
+|-------|------------|--------------|
+| **Ingest** | `document_loader.py` | Load `.txt` files from `documents/` |
+| **Preprocess** | `preprocessing.py` | Lowercase, remove punctuation, tokenize |
+| **Retrieve** | `search_engine.py` | TF-IDF vectors + cosine similarity ranking |
+| **Generate** | `rag.py` | Pass excerpts as context → Groq LLM |
+| **Serve** | `api.py` + `static/` | REST API + chat UI |
+
+---
+
+## Features
+
+- 🔍 **TF-IDF retrieval** — classic IR with scikit-learn, no GPU required
+- 🤖 **RAG pipeline** — LLM answers grounded in retrieved document text
+- 💬 **Chat UI** — clean interface with typing indicator and source cards
+- 🔌 **REST API** — `/api/ask` for full RAG, `/search` for retrieval only
+- 📄 **Source citations** — every answer shows which files were used
+
+---
+
+## Quick Start
+
+**1. Clone and set up the environment**
 
 ```bash
+cd smart-document-search
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+source .venv/Scripts/activate   # Git Bash (Windows)
 pip install -r requirements.txt
 ```
 
-On macOS/Linux: `source .venv/bin/activate`
-
-## CLI demo
+**2. Add your Groq API key** (free at [console.groq.com/keys](https://console.groq.com/keys))
 
 ```bash
-python -m app.main
+cp .env.example .env
 ```
 
-Or run the search module demo:
-
-```bash
-python -m app.search_engine
+```env
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_your-key-here
 ```
 
-## Run the API
+**3. Run**
 
 ```bash
 uvicorn app.api:app --reload
 ```
 
-Server default: http://127.0.0.1:8000
+Open **http://127.0.0.1:8000** and try: *"What is RAG and how does it work?"*
 
-### API usage
+---
 
-**Endpoint:** `GET /search`
+## API
 
-| Parameter | Meaning |
-|-----------|---------|
-| `q` | Search query (required) |
-| `top_k` | Max results (default `3`, max `50`) |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/ask` | Full RAG — retrieve + generate answer |
+| `GET` | `/search?q=...` | Retrieval only — ranked document list |
+| `GET` | `/api/stats` | Document count and system info |
 
-**Example request**
+<details>
+<summary><strong>Example: POST /api/ask</strong></summary>
 
-```http
-GET http://127.0.0.1:8000/search?q=python+indexing&top_k=2
-```
-
-**Example response**
-
+**Request**
 ```json
 {
-  "query": "python indexing",
-  "top_results": [
-    {
-      "document": "example_meeting_notes.txt",
-      "similarity_score": 0.42
-    }
-  ]
+  "query": "What is gradient descent?",
+  "top_k": 3
 }
 ```
 
-Interactive docs: http://127.0.0.1:8000/docs
+**Response**
+```json
+{
+  "query": "What is gradient descent?",
+  "answer": "Gradient descent is an optimization algorithm...",
+  "sources": [
+    { "document": "machine_learning.txt", "similarity_score": 0.1314 }
+  ],
+  "provider": "groq"
+}
+```
 
-## Technologies
+</details>
 
-- Python 3
-- FastAPI, Uvicorn
-- scikit-learn (`TfidfVectorizer`, cosine similarity)
+Interactive docs: **http://127.0.0.1:8000/docs**
+
+---
+
+## Project Structure
+
+```
+smart-document-search/
+├── app/
+│   ├── config.py            # Settings from .env
+│   ├── document_loader.py   # Load .txt files
+│   ├── preprocessing.py     # Text normalization
+│   ├── search_engine.py     # TF-IDF + cosine similarity
+│   ├── rag.py               # Retrieval + Groq generation
+│   ├── api.py               # FastAPI routes
+│   └── main.py              # CLI demo
+├── documents/               # Knowledge base (12 sample files)
+├── static/                  # Chat UI (HTML, CSS, JS)
+├── .env.example
+└── requirements.txt
+```
+
+<details>
+<summary><strong>What each file does</strong></summary>
+
+| File | Purpose |
+|------|---------|
+| `config.py` | Loads paths and Groq credentials from `.env` |
+| `document_loader.py` | Reads `.txt` corpus (skips `README.txt`) |
+| `preprocessing.py` | Cleans text before indexing |
+| `search_engine.py` | Builds TF-IDF matrix, ranks by similarity |
+| `rag.py` | Builds LLM context, calls Groq, returns answer + sources |
+| `api.py` | HTTP endpoints and static file serving |
+| `main.py` | Terminal demo without browser |
+| `static/index.html` | Chat page layout |
+| `static/style.css` | UI styling |
+| `static/app.js` | API calls, message rendering, source cards |
+
+</details>
+
+---
+
+## Tech Stack
+
+| Layer | Tools |
+|-------|-------|
+| Backend | Python, FastAPI, Uvicorn |
+| Retrieval | scikit-learn (TF-IDF, cosine similarity) |
+| Generation | Groq LLM (Llama 3.3) |
+| Frontend | HTML, CSS, JavaScript |
+
+---
 
 ## Notes
 
-- README-style `.txt` files under `documents/` named like `README.txt` are skipped by the loader.
-- Empty or whitespace-only queries return `"top_results": []`.
+- Never commit `.env` — it contains your API key (already in `.gitignore`)
+- Files named `README.txt` inside `documents/` are not indexed
+- The `openai` Python package is used as a client for the Groq-compatible API
+
+---
+
+## Author
+
+**Wiem Gallaoui** — Python · RAG · Software Engineering
+
+---
+
+<p align="center">
+  <sub>Built as a portfolio project to explore retrieval-augmented generation end-to-end.</sub>
+</p>
