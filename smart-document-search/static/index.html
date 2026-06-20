@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Document Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css?v=3" />
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div>
+          <h1>RAG Document Assistant</h1>
+          <p class="tagline">AI-powered question answering over your document knowledge base</p>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <div class="meta-item">
+          <span class="meta-value" id="doc-count">—</span>
+          <span class="meta-label">Documents Indexed</span>
+        </div>
+        <div class="meta-divider"></div>
+        <div class="meta-item">
+          <span class="meta-value" id="retrieval-method">TF-IDF</span>
+          <span class="meta-label">Retrieval</span>
+        </div>
+        <div class="meta-divider"></div>
+        <div class="meta-item">
+          <span class="meta-value" id="llm-provider">—</span>
+          <span class="meta-label">Provider</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Chat -->
+    <main class="chat" id="chat" role="log" aria-live="polite">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon" aria-hidden="true">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <h2>Ask a question about your indexed documents</h2>
+        <p>Get instant answers grounded in your knowledge base, with source citations.</p>
+        <div class="suggestions">
+          <button type="button" class="suggestion" data-query="What is RAG and how does it work?">
+            <span class="suggestion-icon">💡</span>
+            What is RAG?
+          </button>
+          <button type="button" class="suggestion" data-query="Explain gradient descent in machine learning">
+            <span class="suggestion-icon">📊</span>
+            Gradient descent
+          </button>
+          <button type="button" class="suggestion" data-query="How do Docker containers work?">
+            <span class="suggestion-icon">🐳</span>
+            Docker containers
+          </button>
+          <button type="button" class="suggestion" data-query="What are REST API best practices?">
+            <span class="suggestion-icon">🔗</span>
+            REST API design
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Input -->
+    <footer class="input-bar">
+      <form id="search-form" class="input-form">
+        <input
+          id="query-input"
+          type="text"
+          placeholder="Ask a question about your indexed documents…"
+          autocomplete="off"
+          required
+          aria-label="Your question"
+        />
+        <button type="submit" id="submit-btn" aria-label="Send question">
+          <svg class="send-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          <span class="spinner hidden" aria-hidden="true"></span>
+        </button>
+      </form>
+      <p class="footer-note">Powered by FastAPI, TF-IDF Retrieval, and Groq LLM</p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js?v=3"></script>
+</body>
+</html>
