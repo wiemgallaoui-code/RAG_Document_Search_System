@@ -1,0 +1,17 @@
+Cloud Computing — Fundamentals
+
+Cloud computing delivers on-demand computing resources over the internet. Instead of owning physical servers, organizations rent infrastructure from providers like AWS, Azure, and Google Cloud.
+
+Infrastructure as a Service (IaaS) provides virtual machines, storage, and networking. Platform as a Service (PaaS) adds managed runtimes and databases. Software as a Service (SaaS) delivers complete applications like email or CRM tools.
+
+Key benefits include elasticity (scale up or down on demand), pay-as-you-go pricing, and reduced operational overhead. A startup can launch globally without buying hardware upfront.
+
+Common patterns: microservices deployed in containers (Docker), orchestrated by Kubernetes, behind load balancers with auto-scaling groups. Serverless functions (AWS Lambda, Cloud Functions) run code without managing servers — ideal for event-driven workloads.
+
+Storage tiers matter: hot storage for frequently accessed data, cold/archive storage for backups at lower cost. Object storage (S3, Blob Storage) holds unstructured files; block storage suits databases.
+
+Security in the cloud uses shared responsibility: the provider secures the infrastructure; the customer secures their data, access policies, and application code. IAM roles, encryption at rest and in transit, and VPC network isolation are essential practices.
+
+High availability spans multiple availability zones. Disaster recovery strategies include backup snapshots, cross-region replication, and defined RTO/RPO targets.
+
+Cost optimization: right-size instances, use reserved or spot pricing, set budget alerts, and delete unused resources. FinOps teams track cloud spend across departments.

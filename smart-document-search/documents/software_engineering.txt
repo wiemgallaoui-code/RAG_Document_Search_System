@@ -1,0 +1,21 @@
+Software Engineering Best Practices
+
+Clean code principles: meaningful names, small functions with a single responsibility, avoid deep nesting, and prefer explicit code over clever shortcuts. Code is read far more often than it is written.
+
+Version control with Git: feature branches, descriptive commit messages, pull requests with code review, and semantic versioning (MAJOR.MINOR.PATCH) for releases. Never commit secrets — use .env files and .gitignore.
+
+Testing pyramid: many unit tests (fast, isolated), fewer integration tests (API + database), and end-to-end tests for critical user flows. pytest is the standard Python test runner; aim for tests that verify behavior, not implementation details.
+
+API design: RESTful resources, consistent naming (/users, /users/{id}), proper HTTP status codes (200 OK, 201 Created, 400 Bad Request, 404 Not Found, 503 Service Unavailable), and JSON request/response bodies with clear schemas.
+
+Documentation: README with setup instructions, API docs (FastAPI generates OpenAPI/Swagger automatically at /docs), inline docstrings for public functions, and architecture decision records (ADRs) for major choices.
+
+CI/CD pipelines run tests and linters on every push. GitHub Actions, GitLab CI, or Jenkins deploy automatically to staging and production after checks pass. Blue-green or canary deployments reduce downtime.
+
+Design patterns useful in backend systems: repository pattern (abstract data access), dependency injection (share DB connections), factory pattern (create search engines), and strategy pattern (swap TF-IDF for embeddings).
+
+Performance: profile before optimizing, cache expensive computations, use async I/O for network-bound work, and paginate large result sets. Monitor with structured logging and metrics (Prometheus, Grafana).
+
+Security basics: validate all inputs, sanitize outputs, use HTTPS, implement authentication (JWT, OAuth2), apply rate limiting, and keep dependencies updated to patch known vulnerabilities.
+
+Agile workflow: sprint planning, daily standups, retrospectives, and incremental delivery. A working prototype beats a perfect design document — iterate based on feedback.

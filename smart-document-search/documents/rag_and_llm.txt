@@ -1,0 +1,24 @@
+RAG and Large Language Models — Architecture Guide
+
+Retrieval-Augmented Generation (RAG) combines information retrieval with text generation. Instead of relying solely on an LLM's training data, RAG fetches relevant documents at query time and uses them as context for the answer.
+
+Pipeline stages:
+1. Ingestion — load documents (PDF, TXT, HTML), split into chunks (500–1000 tokens with overlap).
+2. Indexing — embed chunks with a model (OpenAI text-embedding-3, sentence-transformers) and store in a vector database (Pinecone, Chroma, FAISS).
+3. Retrieval — embed the user query, find top-k similar chunks via cosine similarity or approximate nearest neighbor search.
+4. Generation — pass retrieved chunks + query to an LLM with a system prompt: "Answer only from the provided context."
+5. Citation — return source document names and chunk IDs alongside the answer.
+
+Why RAG over fine-tuning: cheaper, easier to update knowledge (re-index new docs), reduces hallucination, and works with proprietary data without retraining.
+
+Chunking strategies: fixed-size splits, sentence-aware splits, or semantic chunking. Overlap (10–20%) prevents losing context at chunk boundaries. Metadata (title, page, section) improves filtering.
+
+Hybrid search combines keyword retrieval (BM25, TF-IDF) with vector search for better recall — especially when exact terms matter (product codes, legal phrases).
+
+LLM providers: OpenAI GPT-4o, Anthropic Claude, Groq (fast inference, free tier), Ollama (local open-source models). Choose based on latency, cost, privacy, and language support.
+
+Evaluation: measure retrieval precision/recall (did we fetch the right chunks?) and answer faithfulness (does the response match the context?). Human review and automated benchmarks (RAGAS) help.
+
+Production concerns: rate limiting, caching frequent queries, monitoring token usage, fallback when the LLM is unavailable, and secure handling of API keys via environment variables.
+
+Common pitfalls: chunks too large (noise in context), too small (lost meaning), no re-ranking step, and prompts that allow the model to invent facts outside the context.

@@ -1,0 +1,17 @@
+Data Science Workflow — From Raw Data to Insights
+
+Data science combines statistics, programming, and domain knowledge to extract insights from data. A typical project follows: define the question, collect data, clean and explore, model, evaluate, and communicate results.
+
+Data collection sources include databases (SQL queries), APIs, CSV/JSON files, web scraping, and sensors. Data quality issues — missing values, duplicates, outliers, inconsistent formats — must be handled before analysis.
+
+Exploratory Data Analysis (EDA) uses summary statistics, histograms, correlation matrices, and scatter plots to understand distributions and relationships. Pandas and NumPy are standard Python tools; visualization libraries include Matplotlib and Seaborn.
+
+Feature engineering transforms raw columns into useful inputs: encoding categorical variables (one-hot, label encoding), scaling numerics, creating date features, and aggregating time-series windows. Good features often matter more than model choice.
+
+Model selection depends on the task: linear regression for trends, random forests for tabular classification, XGBoost for competitions, neural networks for images and text. Always split data into train/validation/test sets to avoid overfitting.
+
+Evaluation metrics: accuracy, precision, recall, F1 for classification; MAE, RMSE, R² for regression. Business metrics (revenue impact, cost savings) matter more than pure statistical scores in production.
+
+Communication: Jupyter notebooks for exploration, dashboards (Streamlit, Grafana) for stakeholders, and clear written reports explaining assumptions and limitations. Reproducibility requires version-controlled code, pinned dependencies, and documented data pipelines.
+
+Ethics and privacy: anonymize personal data, comply with GDPR, audit models for bias, and document how automated decisions affect users.

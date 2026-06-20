@@ -1,0 +1,27 @@
+DevOps and Containerization
+
+DevOps bridges development and operations through automation, collaboration, and continuous delivery. The goal is to ship reliable software faster with shorter feedback loops.
+
+Containers package an application with its dependencies into a portable image. Docker is the standard tool: Dockerfile defines the build, docker compose orchestrates multi-service setups locally.
+
+A typical Dockerfile for a Python API:
+- Base image (python:3.12-slim)
+- Copy requirements.txt, run pip install
+- Copy application code
+- Expose port, set CMD to run uvicorn
+
+Kubernetes (K8s) manages containers at scale: deployments, services, ingress controllers, config maps, and secrets. Pods run containers; services provide stable network endpoints; horizontal pod autoscaler adjusts replicas based on CPU/memory.
+
+CI/CD with GitHub Actions: on push, run lint (ruff), tests (pytest), build Docker image, push to registry (GHCR, ECR), deploy to staging. Production deploys require manual approval or tag-based triggers.
+
+Infrastructure as Code (IaC): Terraform or Pulumi define cloud resources in version-controlled files. Reproducible environments, peer-reviewed changes, and drift detection replace manual console clicks.
+
+Observability triad: logs (structured JSON via Python logging), metrics (request latency, error rates), and traces (OpenTelemetry across services). Alert on SLO violations, not every warning.
+
+Environment management: development, staging, production with separate configs and secrets. Twelve-factor app methodology: config in environment variables, stateless processes, disposability, and log streams.
+
+Container security: scan images for CVEs (Trivy, Snyk), run as non-root user, minimal base images (distroless, alpine), and network policies to restrict pod communication.
+
+Deployment strategies: rolling update (gradual replacement), blue-green (switch traffic between two environments), canary (route 5% traffic to new version first). Rollback plans are mandatory for production changes.
+
+Local development parity: docker compose runs API + database + redis together so "works on my machine" matches production behavior.
