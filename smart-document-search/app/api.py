@@ -20,23 +20,23 @@ from pydantic import BaseModel, Field
 from app.config import DOCUMENTS_DIR, LLM_PROVIDER, OPENAI_API_KEY, GROQ_API_KEY, STATIC_DIR
 from app.document_loader import load_txt_documents
 from app.rag import ask as rag_ask
-from app.search_engine import DocumentSearchEngine, build_search_engine
+from app.retrieval import HybridRetriever, build_retriever
 
-_engine: DocumentSearchEngine | None = None
+_retriever: HybridRetriever | None = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load and index documents once when the server starts."""
-    global _engine
-    _engine = build_search_engine()
+    global _retriever
+    _retriever = build_retriever()
     yield
-    _engine = None
+    _retriever = None
 
 
 app = FastAPI(
     title="RAG Document Assistant",
-    description="TF-IDF retrieval with RAG answer generation (Groq / OpenAI / Ollama).",
+    description="Hybrid chunk retrieval (embeddings + TF-IDF) with RAG answer generation.",
     lifespan=lifespan,
 )
 
@@ -46,7 +46,7 @@ if STATIC_DIR.is_dir():
 
 class AskRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User question")
-    top_k: int = Field(3, ge=1, le=50, description="Number of source documents")
+    top_k: int = Field(3, ge=1, le=50, description="Number of source chunks")
 
 
 def _active_provider_label() -> str:
@@ -68,9 +68,11 @@ def _active_provider_label() -> str:
 def stats() -> dict[str, str | int]:
     """Return corpus and system info for the frontend header."""
     docs = load_txt_documents(DOCUMENTS_DIR)
+    method = _retriever.retrieval_method if _retriever else "Hybrid (Embeddings + TF-IDF)"
     return {
         "document_count": len(docs),
-        "retrieval_method": "TF-IDF",
+        "chunk_count": _retriever.chunk_count if _retriever else 0,
+        "retrieval_method": method,
         "llm_provider": _active_provider_label(),
     }
 
@@ -80,13 +82,17 @@ def search(
     q: str = Query(..., description="Search terms"),
     top_k: int = Query(3, ge=1, le=50, description="Max number of hits"),
 ) -> dict[str, Any]:
-    """Return the most relevant documents for ``q`` (retrieval only)."""
-    if _engine is None:
+    """Return the most relevant chunks for ``q`` (retrieval only)."""
+    if _retriever is None:
         raise HTTPException(status_code=503, detail="Search engine not ready")
 
-    hits = _engine.search(q, top_k=top_k)
+    hits = _retriever.search(q, top_k=top_k)
     top_results = [
-        {"document": hit["name"], "similarity_score": hit["score"]}
+        {
+            "document": hit["source"],
+            "chunk_id": hit["chunk_id"],
+            "similarity_score": hit["score"],
+        }
         for hit in hits
     ]
 
@@ -98,11 +104,11 @@ def search(
 
 @app.post("/api/ask")
 def ask_endpoint(body: AskRequest) -> dict[str, Any]:
-    """Retrieve relevant documents and generate a natural-language answer."""
-    if _engine is None:
+    """Retrieve relevant chunks and generate a natural-language answer."""
+    if _retriever is None:
         raise HTTPException(status_code=503, detail="Search engine not ready")
 
-    return rag_ask(_engine, body.query, top_k=body.top_k)
+    return rag_ask(_retriever, body.query, top_k=body.top_k)
 
 
 @app.get("/")

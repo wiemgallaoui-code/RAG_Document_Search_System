@@ -71,6 +71,9 @@ class DocumentSearchEngine:
                 "name": doc["name"],
                 "score": round(score, 4),
             }
+            if "chunk_id" in doc:
+                hit["chunk_id"] = doc["chunk_id"]
+                hit["source"] = doc.get("source", doc["name"])
             if include_content:
                 hit["content"] = doc["content"]
             results.append(hit)

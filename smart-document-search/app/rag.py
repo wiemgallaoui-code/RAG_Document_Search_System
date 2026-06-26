@@ -1,4 +1,4 @@
-"""Retrieval-augmented generation: TF-IDF retrieval + LLM answer."""
+"""Retrieval-augmented generation: hybrid chunk retrieval + LLM answer."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from app.config import (
     OPENAI_API_KEY,
     OPENAI_MODEL,
 )
-from app.search_engine import DocumentSearchEngine
+from app.retrieval import HybridRetriever
 
 SYSTEM_PROMPT = (
     "You are a knowledgeable assistant answering questions from a document knowledge base. "
@@ -39,7 +39,7 @@ def build_context(hits: list[dict[str, float | str]]) -> str:
         if not content:
             continue
 
-        header = f"--- {name} ---\n"
+        header = f"--- {name} ({hit.get('chunk_id', '')}) ---\n"
         budget = remaining - len(header)
         if budget <= 0:
             break
@@ -179,12 +179,12 @@ def _try_llm(query: str, context: str) -> tuple[str, str] | None:
 
 
 def ask(
-    engine: DocumentSearchEngine,
+    retriever: HybridRetriever,
     query: str,
     top_k: int = 3,
 ) -> dict[str, object]:
     """Run retrieval + generation and return a structured RAG response."""
-    hits = engine.search(query, top_k=top_k, include_content=True)
+    hits = retriever.search(query, top_k=top_k, include_content=True)
 
     if not hits:
         return {
@@ -204,7 +204,11 @@ def ask(
         provider = "fallback"
 
     sources = [
-        {"document": hit["name"], "similarity_score": hit["score"]}
+        {
+            "document": hit.get("source") or hit["name"],
+            "chunk_id": hit.get("chunk_id", ""),
+            "similarity_score": hit["score"],
+        }
         for hit in hits
     ]
 

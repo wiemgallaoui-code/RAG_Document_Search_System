@@ -28,3 +28,11 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 
 # Max characters of retrieved document text sent to the LLM as context.
 MAX_CONTEXT_CHARS = int(os.getenv("MAX_CONTEXT_CHARS", "6000"))
+
+# Chunking + vector retrieval (Step 1 — embeddings)
+CHROMA_DIR = PROJECT_ROOT / "chroma_db"
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "650"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "100"))
+HYBRID_VECTOR_WEIGHT = float(os.getenv("HYBRID_VECTOR_WEIGHT", "0.7"))
+HYBRID_TFIDF_WEIGHT = float(os.getenv("HYBRID_TFIDF_WEIGHT", "0.3"))

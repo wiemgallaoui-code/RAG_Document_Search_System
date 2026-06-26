@@ -4,3 +4,5 @@ uvicorn[standard]==0.34.0
 openai==1.61.0
 python-dotenv==1.0.1
 httpx==0.28.1
+sentence-transformers>=3.4.1
+chromadb>=0.6.3
