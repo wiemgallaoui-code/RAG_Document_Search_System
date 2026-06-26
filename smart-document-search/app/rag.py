@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal, TypedDict
+
 import httpx
 
 from app.config import (
@@ -15,6 +17,22 @@ from app.config import (
     OPENAI_MODEL,
 )
 from app.retrieval import HybridRetriever
+
+ProviderName = Literal["groq", "openai", "ollama", "fallback", "none"]
+
+
+class SourceHit(TypedDict):
+    document: str
+    chunk_id: str
+    similarity_score: float
+
+
+class RagResponse(TypedDict):
+    query: str
+    answer: str
+    sources: list[SourceHit]
+    provider: ProviderName
+
 
 SYSTEM_PROMPT = (
     "You are a knowledgeable assistant answering questions from a document knowledge base. "
@@ -61,9 +79,11 @@ def _extractive_fallback(query: str, hits: list[dict[str, float | str]]) -> str:
     ]
     for hit in hits:
         name = hit["name"]
+        chunk_id = hit.get("chunk_id", "")
         content = str(hit.get("content", "")).strip()
         preview = content[:300] + ("..." if len(content) > 300 else "")
-        lines.append(f"[{name}] (score: {hit['score']})\n{preview}\n")
+        label = f"{name} [{chunk_id}]" if chunk_id else str(name)
+        lines.append(f"[{label}] (score: {hit['score']})\n{preview}\n")
 
     lines.append(
         "Tip: set GROQ_API_KEY in .env (free at console.groq.com) for a generated answer."
@@ -136,7 +156,7 @@ def _generate_ollama(query: str, context: str) -> str:
     return data.get("message", {}).get("content", "")
 
 
-def _try_llm(query: str, context: str) -> tuple[str, str] | None:
+def _try_llm(query: str, context: str) -> tuple[str, ProviderName] | None:
     """Return (answer, provider) or None if no provider succeeded."""
     if LLM_PROVIDER == "groq" and GROQ_API_KEY:
         try:
@@ -178,12 +198,23 @@ def _try_llm(query: str, context: str) -> tuple[str, str] | None:
     return None
 
 
+def _build_sources(hits: list[dict[str, float | str]]) -> list[SourceHit]:
+    return [
+        {
+            "document": str(hit.get("source") or hit["name"]),
+            "chunk_id": str(hit.get("chunk_id", "")),
+            "similarity_score": float(hit["score"]),
+        }
+        for hit in hits
+    ]
+
+
 def ask(
     retriever: HybridRetriever,
     query: str,
     top_k: int = 3,
-) -> dict[str, object]:
-    """Run retrieval + generation and return a structured RAG response."""
+) -> RagResponse:
+    """Run chunk retrieval + LLM generation; return answer with cited sources."""
     hits = retriever.search(query, top_k=top_k, include_content=True)
 
     if not hits:
@@ -203,18 +234,9 @@ def ask(
         answer = _extractive_fallback(query, hits)
         provider = "fallback"
 
-    sources = [
-        {
-            "document": hit.get("source") or hit["name"],
-            "chunk_id": hit.get("chunk_id", ""),
-            "similarity_score": hit["score"],
-        }
-        for hit in hits
-    ]
-
     return {
         "query": query.strip(),
         "answer": answer,
-        "sources": sources,
+        "sources": _build_sources(hits),
         "provider": provider,
     }

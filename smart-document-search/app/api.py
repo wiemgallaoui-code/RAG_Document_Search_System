@@ -10,7 +10,7 @@ Open http://127.0.0.1:8000 for the web UI.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
@@ -49,6 +49,30 @@ class AskRequest(BaseModel):
     top_k: int = Field(3, ge=1, le=50, description="Number of source chunks")
 
 
+class SourceHit(BaseModel):
+    document: str = Field(..., description="Source file name")
+    chunk_id: str = Field(..., description="Chunk identifier within the document")
+    similarity_score: float = Field(..., description="Hybrid retrieval score")
+
+
+class AskResponse(BaseModel):
+    query: str
+    answer: str
+    sources: list[SourceHit]
+    provider: Literal["groq", "openai", "ollama", "fallback", "none"]
+
+
+class SearchHit(BaseModel):
+    document: str
+    chunk_id: str
+    similarity_score: float
+
+
+class SearchResponse(BaseModel):
+    query: str
+    top_results: list[SearchHit]
+
+
 def _active_provider_label() -> str:
     """Human-readable label for the configured LLM provider."""
     if LLM_PROVIDER == "groq" and GROQ_API_KEY:
@@ -77,38 +101,36 @@ def stats() -> dict[str, str | int]:
     }
 
 
-@app.get("/search")
+@app.get("/search", response_model=SearchResponse)
 def search(
     q: str = Query(..., description="Search terms"),
     top_k: int = Query(3, ge=1, le=50, description="Max number of hits"),
-) -> dict[str, Any]:
+) -> SearchResponse:
     """Return the most relevant chunks for ``q`` (retrieval only)."""
     if _retriever is None:
         raise HTTPException(status_code=503, detail="Search engine not ready")
 
     hits = _retriever.search(q, top_k=top_k)
     top_results = [
-        {
-            "document": hit["source"],
-            "chunk_id": hit["chunk_id"],
-            "similarity_score": hit["score"],
-        }
+        SearchHit(
+            document=str(hit["source"]),
+            chunk_id=str(hit["chunk_id"]),
+            similarity_score=float(hit["score"]),
+        )
         for hit in hits
     ]
 
-    return {
-        "query": q.strip(),
-        "top_results": top_results,
-    }
+    return SearchResponse(query=q.strip(), top_results=top_results)
 
 
-@app.post("/api/ask")
-def ask_endpoint(body: AskRequest) -> dict[str, Any]:
+@app.post("/api/ask", response_model=AskResponse)
+def ask_endpoint(body: AskRequest) -> AskResponse:
     """Retrieve relevant chunks and generate a natural-language answer."""
     if _retriever is None:
         raise HTTPException(status_code=503, detail="Search engine not ready")
 
-    return rag_ask(_retriever, body.query, top_k=body.top_k)
+    result = rag_ask(_retriever, body.query, top_k=body.top_k)
+    return AskResponse(**result)
 
 
 @app.get("/")

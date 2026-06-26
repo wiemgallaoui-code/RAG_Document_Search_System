@@ -388,6 +388,14 @@ body {
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
+  flex: 1;
+}
+
+.source-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
 }
 
 .source-icon {
@@ -406,6 +414,15 @@ body {
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-chunk {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", monospace;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

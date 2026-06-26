@@ -122,10 +122,13 @@ function renderSources(sources) {
   const cards = sources
     .map(
       (s) => `
-      <div class="source-card" title="Similarity score: ${s.similarity_score}">
+      <div class="source-card" title="${escapeHtml(s.chunk_id || s.document)} — score ${s.similarity_score}">
         <div class="source-info">
           <span class="source-icon">📄</span>
-          <span class="source-name">${escapeHtml(s.document)}</span>
+          <div class="source-meta">
+            <span class="source-name">${escapeHtml(s.document)}</span>
+            ${s.chunk_id ? `<span class="source-chunk">${escapeHtml(s.chunk_id)}</span>` : ""}
+          </div>
         </div>
         <div class="source-score-wrap">
           <span class="source-score">${s.similarity_score.toFixed(4)}</span>
