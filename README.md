@@ -92,13 +92,52 @@ Open **http://127.0.0.1:8000** and try: *"What is RAG and how does it work?"*
 
 ---
 
+## Tests
+
+```bash
+cd smart-document-search
+pip install -r requirements.txt
+python -m pytest -v
+```
+
+Tests cover document loading, preprocessing, chunk retrieval, and `POST /api/ask` with a mocked LLM (no real API calls).
+
+---
+
 ## API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/ask` | Full RAG — retrieve + generate answer |
-| `GET` | `/search?q=...` | Retrieval only — ranked document list |
-| `GET` | `/api/stats` | Document count and system info |
+| `GET` | `/api/health` | Liveness check — retriever index ready |
+| `GET` | `/api/stats` | Document count, chunk count, retrieval method |
+| `POST` | `/api/ask` | Full RAG — retrieve chunks + generate answer |
+| `GET` | `/search?q=...` | Retrieval only — ranked chunk list |
+
+<details>
+<summary><strong>Example: GET /api/health</strong></summary>
+
+```json
+{
+  "status": "ok",
+  "retriever_ready": true
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Example: GET /api/stats</strong></summary>
+
+```json
+{
+  "document_count": 12,
+  "chunk_count": 48,
+  "retrieval_method": "Hybrid (Embeddings + TF-IDF)",
+  "llm_provider": "Groq"
+}
+```
+
+</details>
 
 <details>
 <summary><strong>Example: POST /api/ask</strong></summary>
@@ -117,11 +156,22 @@ Open **http://127.0.0.1:8000** and try: *"What is RAG and how does it work?"*
   "query": "What is gradient descent?",
   "answer": "Gradient descent is an optimization algorithm...",
   "sources": [
-    { "document": "machine_learning.txt", "similarity_score": 0.1314 }
+    {
+      "document": "machine_learning.txt",
+      "chunk_id": "machine_learning.txt:1",
+      "similarity_score": 0.9244
+    }
   ],
   "provider": "groq"
 }
 ```
+
+</details>
+
+<details>
+<summary><strong>Backward compatibility: GET /search</strong></summary>
+
+Response shape is unchanged at the top level: `query` + `top_results`. Each hit still includes `document` and `similarity_score`. Since v2 retrieval, each hit also includes `chunk_id` (additive field). Results are ranked **chunks**, not whole files.
 
 </details>
 
@@ -143,6 +193,7 @@ smart-document-search/
 │   └── main.py              # CLI demo
 ├── documents/               # Knowledge base (12 sample files)
 ├── static/                  # Chat UI (HTML, CSS, JS)
+├── tests/                   # pytest suite
 ├── .env.example
 └── requirements.txt
 ```
