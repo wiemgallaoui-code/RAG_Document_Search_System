@@ -5,6 +5,20 @@ Run from the ``smart-document-search`` folder::
     uvicorn app.api:app --reload
 
 Open http://127.0.0.1:8000 for the web UI.
+
+Endpoints
+---------
+``GET /api/health``   — liveness check (retriever readiness)
+``GET /api/stats``    — corpus size, chunk count, retrieval method
+``GET /search``       — chunk retrieval only (see backward-compat notes below)
+``POST /api/ask``     — hybrid retrieval + LLM answer
+
+Backward compatibility (``GET /search``)
+----------------------------------------
+Top-level shape is unchanged: ``{"query", "top_results"}`` with
+``document`` and ``similarity_score`` on each hit. Since v2 retrieval,
+each hit also includes ``chunk_id`` (additive). Results are ranked
+**chunks**, not whole files.
 """
 
 from __future__ import annotations
@@ -73,6 +87,18 @@ class SearchResponse(BaseModel):
     top_results: list[SearchHit]
 
 
+class HealthResponse(BaseModel):
+    status: Literal["ok", "degraded"]
+    retriever_ready: bool
+
+
+class StatsResponse(BaseModel):
+    document_count: int
+    chunk_count: int
+    retrieval_method: str
+    llm_provider: str
+
+
 def _active_provider_label() -> str:
     """Human-readable label for the configured LLM provider."""
     if LLM_PROVIDER == "groq" and GROQ_API_KEY:
@@ -88,17 +114,38 @@ def _active_provider_label() -> str:
     return "Fallback"
 
 
-@app.get("/api/stats")
-def stats() -> dict[str, str | int]:
-    """Return corpus and system info for the frontend header."""
+def _retrieval_method_label() -> str:
+    if _retriever is None:
+        return "Hybrid (Embeddings + TF-IDF)"
+    return _retriever.retrieval_method
+
+
+def _require_retriever() -> HybridRetriever:
+    if _retriever is None:
+        raise HTTPException(status_code=503, detail="Search engine not ready")
+    return _retriever
+
+
+@app.get("/api/health", response_model=HealthResponse)
+def health() -> HealthResponse:
+    """Return service liveness and whether the retrieval index is loaded."""
+    ready = _retriever is not None
+    return HealthResponse(
+        status="ok" if ready else "degraded",
+        retriever_ready=ready,
+    )
+
+
+@app.get("/api/stats", response_model=StatsResponse)
+def stats() -> StatsResponse:
+    """Return corpus and system info (document count, chunk count, retrieval method)."""
     docs = load_txt_documents(DOCUMENTS_DIR)
-    method = _retriever.retrieval_method if _retriever else "Hybrid (Embeddings + TF-IDF)"
-    return {
-        "document_count": len(docs),
-        "chunk_count": _retriever.chunk_count if _retriever else 0,
-        "retrieval_method": method,
-        "llm_provider": _active_provider_label(),
-    }
+    return StatsResponse(
+        document_count=len(docs),
+        chunk_count=_retriever.chunk_count if _retriever else 0,
+        retrieval_method=_retrieval_method_label(),
+        llm_provider=_active_provider_label(),
+    )
 
 
 @app.get("/search", response_model=SearchResponse)
@@ -107,10 +154,8 @@ def search(
     top_k: int = Query(3, ge=1, le=50, description="Max number of hits"),
 ) -> SearchResponse:
     """Return the most relevant chunks for ``q`` (retrieval only)."""
-    if _retriever is None:
-        raise HTTPException(status_code=503, detail="Search engine not ready")
-
-    hits = _retriever.search(q, top_k=top_k)
+    retriever = _require_retriever()
+    hits = retriever.search(q, top_k=top_k)
     top_results = [
         SearchHit(
             document=str(hit["source"]),
@@ -126,10 +171,8 @@ def search(
 @app.post("/api/ask", response_model=AskResponse)
 def ask_endpoint(body: AskRequest) -> AskResponse:
     """Retrieve relevant chunks and generate a natural-language answer."""
-    if _retriever is None:
-        raise HTTPException(status_code=503, detail="Search engine not ready")
-
-    result = rag_ask(_retriever, body.query, top_k=body.top_k)
+    retriever = _require_retriever()
+    result = rag_ask(retriever, body.query, top_k=body.top_k)
     return AskResponse(**result)
 
 
