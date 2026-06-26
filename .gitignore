@@ -1,0 +1,29 @@
+# Virtual environments (repo root)
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets
+.env
+.env.*
+*.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# RAG / local artifacts
+chroma_db/
+chroma/
+*.db
+*.sqlite3
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
