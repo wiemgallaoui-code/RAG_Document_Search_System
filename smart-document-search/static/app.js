@@ -45,6 +45,13 @@ function escapeHtml(str) {
     .replace(/"/g, "&quot;");
 }
 
+/** Format retrieval score for display (supports number or string from API). */
+function formatScore(source) {
+  const raw = source?.similarity_score ?? source?.score;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value.toFixed(4) : "—";
+}
+
 /**
  * Convert plain-text LLM output into HTML with paragraphs and lists.
  * Supports: blank-line paragraphs, "- item" bullets, "1. item" numbered lists.
@@ -120,22 +127,24 @@ function renderSources(sources) {
   if (!sources?.length) return "";
 
   const cards = sources
-    .map(
-      (s) => `
-      <div class="source-card" title="${escapeHtml(s.chunk_id || s.document)} — score ${s.similarity_score}">
+    .map((s) => {
+      const score = formatScore(s);
+      const chunkId = s.chunk_id ? String(s.chunk_id) : "";
+      return `
+      <div class="source-card" title="${escapeHtml(chunkId || s.document)} — score ${score}">
         <div class="source-info">
-          <span class="source-icon">📄</span>
+          <span class="source-icon" aria-hidden="true">📄</span>
           <div class="source-meta">
             <span class="source-name">${escapeHtml(s.document)}</span>
-            ${s.chunk_id ? `<span class="source-chunk">${escapeHtml(s.chunk_id)}</span>` : ""}
+            ${chunkId ? `<span class="source-chunk">${escapeHtml(chunkId)}</span>` : ""}
           </div>
         </div>
-        <div class="source-score-wrap">
-          <span class="source-score">${s.similarity_score.toFixed(4)}</span>
+        <div class="source-score-wrap" aria-label="Similarity score ${score}">
+          <span class="source-score">${score}</span>
           <span class="source-score-label">Score</span>
         </div>
-      </div>`
-    )
+      </div>`;
+    })
     .join("");
 
   return `
@@ -151,8 +160,10 @@ function addAssistantMessage(answer, sources) {
   el.innerHTML = `
     <div class="msg-avatar">AI</div>
     <div class="message-body">
-      <div class="bubble">${formatAnswer(answer)}</div>
-      ${renderSources(sources)}
+      <div class="bubble">
+        ${formatAnswer(answer)}
+        ${renderSources(sources)}
+      </div>
     </div>
   `;
   chat.appendChild(el);
