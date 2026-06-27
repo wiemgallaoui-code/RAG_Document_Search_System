@@ -92,6 +92,54 @@ Open **http://127.0.0.1:8000** and try: *"What is RAG and how does it work?"*
 
 ---
 
+## Run with Docker
+
+**1. Configure environment**
+
+```bash
+cd smart-document-search
+cp .env.example .env
+# Edit .env and set GROQ_API_KEY
+```
+
+**2. Build and start**
+
+**Recommended on slow connections (lite — ~2 min build, TF-IDF retrieval):**
+
+```bash
+docker compose --profile lite up --build
+```
+
+**Full hybrid retrieval (embeddings + TF-IDF — downloads CPU torch ~190 MB during build):**
+
+```bash
+docker compose build --no-cache
+docker compose up
+```
+
+Open **http://127.0.0.1:8000**.
+
+**Build notes**
+- There is **no official `pytorch/pytorch:*-cpu` image** on Docker Hub — the full image installs CPU torch via pip
+- The **lite** profile skips torch, sentence-transformers, and ChromaDB; the app uses **TF-IDF fallback** (same as local dev when embeddings are unavailable)
+- Full build: allow **15–30 minutes** on a slow connection for the torch wheel; if `Read timed out`, rerun `docker compose build --no-cache`
+- After first start, the full image may download the embedding model inside the container
+
+**Notes**
+- Full Docker uses `requirements-docker.txt`; lite uses `requirements-docker-lite.txt` (no pytest)
+- `.env` is loaded via `env_file` in `docker-compose.yml` (never commit `.env`)
+- ChromaDB vectors persist in the `chroma_data` Docker volume at `/app/chroma_db`
+- Stop with `docker compose down` (add `-v` to remove the Chroma volume)
+
+**Troubleshooting**
+- `docker compose build` only builds the image — you must run **`docker compose up`** to start the app
+- Copy `.env.example` to `.env` and set `GROQ_API_KEY` for LLM answers (without it you get extractive fallback text)
+- First startup can take **2–5 minutes** while the embedding model downloads; watch progress: `docker compose logs -f`
+- Check health: `curl http://127.0.0.1:8000/api/health` — `retriever_ready: false` means indexing is still running
+- If port 8000 is busy, stop local uvicorn or change the port mapping in `docker-compose.yml`
+
+--- 
+
 ## Tests
 
 ```bash
@@ -194,6 +242,11 @@ smart-document-search/
 ├── documents/               # Knowledge base (12 sample files)
 ├── static/                  # Chat UI (HTML, CSS, JS)
 ├── tests/                   # pytest suite
+├── Dockerfile               # Full hybrid retrieval (CPU torch via pip)
+├── Dockerfile.lite          # Fast TF-IDF-only image
+├── docker-compose.yml
+├── requirements-docker.txt
+├── requirements-docker-lite.txt
 ├── .env.example
 └── requirements.txt
 ```

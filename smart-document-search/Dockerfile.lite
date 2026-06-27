@@ -1,0 +1,25 @@
+# Fast Docker image — TF-IDF retrieval only (no torch / embeddings download)
+FROM python:3.12-slim-bookworm
+
+WORKDIR /app
+
+ENV PIP_DEFAULT_TIMEOUT=1000 \
+    PIP_RETRIES=10 \
+    PYTHONUNBUFFERED=1
+
+COPY requirements-docker-lite.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir \
+        --default-timeout=1000 \
+        --retries 10 \
+        -r requirements-docker-lite.txt
+
+COPY app/ app/
+COPY documents/ documents/
+COPY static/ static/
+
+RUN mkdir -p /app/chroma_db
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.api:app", "--host", "0.0.0.0", "--port", "8000"]

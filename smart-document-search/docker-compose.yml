@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - chroma_data:/app/chroma_db
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  # Fast build (~2 min): TF-IDF retrieval only, no torch/embeddings download
+  app-lite:
+    profiles: ["lite"]
+    build:
+      context: .
+      dockerfile: Dockerfile.lite
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - chroma_data:/app/chroma_db
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  chroma_data:

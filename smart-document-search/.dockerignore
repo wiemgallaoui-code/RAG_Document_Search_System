@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+
+# Git and IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Local artifacts (rebuilt in container / persisted via volume)
+chroma_db/
+*.log
+
+# Tests not needed in runtime image (optional slimming)
+tests/
+pytest.ini
