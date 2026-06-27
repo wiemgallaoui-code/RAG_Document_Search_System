@@ -13,7 +13,7 @@ from app.config import (
     HYBRID_TFIDF_WEIGHT,
     HYBRID_VECTOR_WEIGHT,
 )
-from app.document_loader import load_txt_documents
+from app.document_loader import load_documents
 from app.embeddings import EmbeddingModel
 from app.preprocessing import preprocess_text
 from app.search_engine import DocumentSearchEngine
@@ -35,7 +35,7 @@ class HybridRetriever:
 
     def __init__(self) -> None:
         self._tfidf = DocumentSearchEngine()
-        self._vector_store = VectorStore(CHROMA_DIR)
+        self._vector_store: VectorStore | None = None
         self._embedder: EmbeddingModel | None = None
         self._vector_enabled = False
         self._chunks: list[dict[str, str]] = []
@@ -71,6 +71,7 @@ class HybridRetriever:
 
         try:
             self._embedder = EmbeddingModel()
+            self._vector_store = VectorStore(CHROMA_DIR)
             self._vector_store.reset()
             texts = [chunk["content"] for chunk in chunks]
             embeddings = self._embedder.encode(texts)
@@ -78,6 +79,7 @@ class HybridRetriever:
             self._vector_enabled = True
         except Exception:
             self._embedder = None
+            self._vector_store = None
             self._vector_enabled = False
 
     def search(
@@ -100,7 +102,7 @@ class HybridRetriever:
         for hit in tfidf_hits:
             hit.setdefault("source", hit.get("name", ""))
 
-        if not self._vector_enabled or self._embedder is None:
+        if not self._vector_enabled or self._embedder is None or self._vector_store is None:
             return self._finalize_hits(tfidf_hits[:top_k], include_content)
 
         query_vector = self._embedder.encode_query(query)
@@ -179,7 +181,7 @@ def _merge_hybrid_scores(
 
 def build_retriever(documents_dir: Path = DOCUMENTS_DIR) -> HybridRetriever:
     """Load documents, chunk them, and build hybrid indexes."""
-    raw_docs = load_txt_documents(documents_dir)
+    raw_docs = load_documents(documents_dir)
     chunks = chunk_documents(
         raw_docs,
         chunk_size=CHUNK_SIZE,
