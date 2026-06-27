@@ -16,7 +16,7 @@
 
 **RAG Document Assistant** is a portfolio project that implements a full **Retrieval-Augmented Generation** pipeline in Python.
 
-You upload plain-text knowledge files, ask a question in natural language, and the system:
+You upload plain-text or PDF knowledge files, ask a question in natural language, and the system:
 
 1. **Retrieves** the most relevant documents using TF-IDF and cosine similarity
 2. **Generates** a grounded answer using the Groq LLM API
@@ -42,7 +42,7 @@ flowchart LR
 
 | Stage | Technology | What happens |
 |-------|------------|--------------|
-| **Ingest** | `document_loader.py` | Load `.txt` files from `documents/` |
+| **Ingest** | `document_loader.py` | Load `.txt` and `.pdf` files from `documents/` |
 | **Preprocess** | `preprocessing.py` | Lowercase, remove punctuation, tokenize |
 | **Retrieve** | `search_engine.py` | TF-IDF vectors + cosine similarity ranking |
 | **Generate** | `rag.py` | Pass excerpts as context → Groq LLM |
@@ -82,13 +82,37 @@ LLM_PROVIDER=groq
 GROQ_API_KEY=gsk_your-key-here
 ```
 
-**3. Run**
+**3. Run the API**
 
 ```bash
 uvicorn app.api:app --reload
 ```
 
-Open **http://127.0.0.1:8000** and try: *"What is RAG and how does it work?"*
+**4. Frontend (React + TypeScript)**
+
+Build once and let FastAPI serve the UI at **http://127.0.0.1:8000**:
+
+```bash
+cd frontend
+npm install
+npm run build
+cd ..
+uvicorn app.api:app --reload
+```
+
+For hot reload during UI work, run the API and Vite dev server in two terminals:
+
+```bash
+# Terminal 1 — API
+uvicorn app.api:app --reload
+
+# Terminal 2 — React dev server (proxies /api and /search to :8000)
+cd frontend && npm install && npm run dev
+```
+
+Open **http://127.0.0.1:5173** for development, or **http://127.0.0.1:8000** after `npm run build`.
+
+Try: *"What is RAG and how does it work?"*
 
 ---
 
@@ -113,8 +137,8 @@ docker compose --profile lite up --build
 **Full hybrid retrieval (embeddings + TF-IDF — downloads CPU torch ~190 MB during build):**
 
 ```bash
-docker compose build --no-cache
-docker compose up
+docker compose --profile full build --no-cache
+docker compose --profile full up
 ```
 
 Open **http://127.0.0.1:8000**.
@@ -233,14 +257,17 @@ Interactive docs: **http://127.0.0.1:8000/docs**
 smart-document-search/
 ├── app/
 │   ├── config.py            # Settings from .env
-│   ├── document_loader.py   # Load .txt files
+│   ├── document_loader.py   # Load .txt and .pdf files
 │   ├── preprocessing.py     # Text normalization
 │   ├── search_engine.py     # TF-IDF + cosine similarity
 │   ├── rag.py               # Retrieval + Groq generation
 │   ├── api.py               # FastAPI routes
 │   └── main.py              # CLI demo
 ├── documents/               # Knowledge base (12 sample files)
-├── static/                  # Chat UI (HTML, CSS, JS)
+├── frontend/                # React + TypeScript chat UI (Vite)
+│   ├── src/                 # App, API client, components
+│   └── dist/                # Production build (served by FastAPI)
+├── static/                  # Legacy vanilla UI (fallback if no dist/)
 ├── tests/                   # pytest suite
 ├── Dockerfile               # Full hybrid retrieval (CPU torch via pip)
 ├── Dockerfile.lite          # Fast TF-IDF-only image
@@ -257,15 +284,15 @@ smart-document-search/
 | File | Purpose |
 |------|---------|
 | `config.py` | Loads paths and Groq credentials from `.env` |
-| `document_loader.py` | Reads `.txt` corpus (skips `README.txt`) |
+| `document_loader.py` | Reads `.txt` and `.pdf` corpus (skips `README.*`) |
 | `preprocessing.py` | Cleans text before indexing |
 | `search_engine.py` | Builds TF-IDF matrix, ranks by similarity |
 | `rag.py` | Builds LLM context, calls Groq, returns answer + sources |
-| `api.py` | HTTP endpoints and static file serving |
+| `api.py` | HTTP endpoints; serves React `frontend/dist/` or legacy `static/` |
 | `main.py` | Terminal demo without browser |
-| `static/index.html` | Chat page layout |
-| `static/style.css` | UI styling |
-| `static/app.js` | API calls, message rendering, source cards |
+| `frontend/src/App.tsx` | Chat UI (messages, sources, suggestions) |
+| `frontend/src/api.ts` | Fetch helpers for `/api/stats` and `/api/ask` |
+| `static/index.html` | Legacy chat page (fallback) |
 
 </details>
 
@@ -278,14 +305,15 @@ smart-document-search/
 | Backend | Python, FastAPI, Uvicorn |
 | Retrieval | scikit-learn (TF-IDF, cosine similarity) |
 | Generation | Groq LLM (Llama 3.3) |
-| Frontend | HTML, CSS, JavaScript |
+| Frontend | React, TypeScript, Vite |
 
 ---
 
 ## Notes
 
 - Never commit `.env` — it contains your API key (already in `.gitignore`)
-- Files named `README.txt` inside `documents/` are not indexed
+- Files named `README.txt` or `README.pdf` inside `documents/` are not indexed
+- Supported formats: `.txt` (UTF-8) and `.pdf` (text extracted via pypdf)
 - The `openai` Python package is used as a client for the Groq-compatible API
 
 ---

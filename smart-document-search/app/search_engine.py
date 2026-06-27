@@ -9,7 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from app.config import DOCUMENTS_DIR
-from app.document_loader import load_txt_documents
+from app.document_loader import load_documents
 from app.preprocessing import preprocess_documents, preprocess_text
 
 
@@ -83,7 +83,7 @@ class DocumentSearchEngine:
 
 def build_search_engine(documents_dir: Path = DOCUMENTS_DIR) -> DocumentSearchEngine:
     """Load documents from disk, preprocess them, and build the index."""
-    raw_docs = load_txt_documents(documents_dir)
+    raw_docs = load_documents(documents_dir)
     processed = preprocess_documents(raw_docs)
     engine = DocumentSearchEngine()
     engine.fit(processed)

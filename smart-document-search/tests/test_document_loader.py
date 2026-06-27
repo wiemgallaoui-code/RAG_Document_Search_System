@@ -6,18 +6,47 @@ from pathlib import Path
 
 import pytest
 
-from app.document_loader import load_txt_documents
+from app.document_loader import load_documents, load_txt_documents
 
 
-def test_load_txt_documents_reads_corpus_and_skips_readme(documents_dir: Path):
-    docs = load_txt_documents(documents_dir)
+def test_load_documents_reads_corpus_and_skips_readme(documents_dir: Path):
+    docs = load_documents(documents_dir)
 
     names = {doc["name"] for doc in docs}
     assert names == {"rag_guide.txt", "docker.txt"}
     assert all(doc["content"].strip() for doc in docs)
 
 
-def test_load_txt_documents_missing_folder_raises(tmp_path: Path):
+def test_load_txt_documents_alias(documents_dir: Path):
+    assert load_txt_documents(documents_dir) == load_documents(documents_dir)
+
+
+def test_load_documents_missing_folder_raises(tmp_path: Path):
     missing = tmp_path / "missing"
     with pytest.raises(FileNotFoundError):
-        load_txt_documents(missing)
+        load_documents(missing)
+
+
+def test_load_documents_reads_pdf(tmp_path: Path, monkeypatch):
+    pdf_path = tmp_path / "rag_guide.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4")
+
+    monkeypatch.setattr(
+        "app.document_loader._read_pdf",
+        lambda _path: (
+            "Retrieval-Augmented Generation (RAG) combines information retrieval "
+            "with text generation in PDF form."
+        ),
+    )
+
+    docs = load_documents(tmp_path)
+    assert len(docs) == 1
+    assert docs[0]["name"] == "rag_guide.pdf"
+    assert "Retrieval-Augmented Generation" in docs[0]["content"]
+
+
+def test_load_documents_skips_empty_pdf(tmp_path: Path, monkeypatch):
+    (tmp_path / "empty.pdf").write_bytes(b"%PDF-1.4")
+    monkeypatch.setattr("app.document_loader._read_pdf", lambda _path: "   ")
+
+    assert load_documents(tmp_path) == []

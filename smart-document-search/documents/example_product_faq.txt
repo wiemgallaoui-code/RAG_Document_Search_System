@@ -1,7 +1,7 @@
 Campus Library Search — Frequently Asked Questions
 
 Q: What file types can I search?
-A: The demo indexes plain text (.txt) files in the documents folder. PDF support is planned for a later release.
+A: The demo indexes plain text (.txt) and PDF (.pdf) files in the documents folder.
 
 Q: How does ranking work?
 A: The system converts documents and your question into TF-IDF vectors, then ranks files by cosine similarity. Higher scores mean more overlapping important terms.
@@ -13,4 +13,4 @@ Q: Is my data sent to the cloud?
 A: This local demo runs entirely on your machine. No external API calls are made during search.
 
 Q: Can I add my own notes?
-A: Yes. Drop UTF-8 text files into the documents directory and restart the API server so the index is rebuilt.
+A: Yes. Drop UTF-8 text files or PDFs into the documents directory and restart the API server so the index is rebuilt.
