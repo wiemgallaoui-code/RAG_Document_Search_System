@@ -31,8 +31,15 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from app.config import DOCUMENTS_DIR, LLM_PROVIDER, OPENAI_API_KEY, GROQ_API_KEY, STATIC_DIR
-from app.document_loader import load_txt_documents
+from app.config import (
+    DOCUMENTS_DIR,
+    FRONTEND_DIST,
+    GROQ_API_KEY,
+    LLM_PROVIDER,
+    OPENAI_API_KEY,
+    STATIC_DIR,
+)
+from app.document_loader import load_documents
 from app.rag import ask as rag_ask
 from app.retrieval import HybridRetriever, build_retriever
 
@@ -53,6 +60,10 @@ app = FastAPI(
     description="Hybrid chunk retrieval (embeddings + TF-IDF) with RAG answer generation.",
     lifespan=lifespan,
 )
+
+_frontend_assets = FRONTEND_DIST / "assets"
+if _frontend_assets.is_dir():
+    app.mount("/assets", StaticFiles(directory=_frontend_assets), name="frontend_assets")
 
 if STATIC_DIR.is_dir():
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -139,7 +150,7 @@ def health() -> HealthResponse:
 @app.get("/api/stats", response_model=StatsResponse)
 def stats() -> StatsResponse:
     """Return corpus and system info (document count, chunk count, retrieval method)."""
-    docs = load_txt_documents(DOCUMENTS_DIR)
+    docs = load_documents(DOCUMENTS_DIR)
     return StatsResponse(
         document_count=len(docs),
         chunk_count=_retriever.chunk_count if _retriever else 0,
@@ -178,7 +189,10 @@ def ask_endpoint(body: AskRequest) -> AskResponse:
 
 @app.get("/")
 def root():
-    index = STATIC_DIR / "index.html"
-    if index.is_file():
-        return FileResponse(index)
+    react_index = FRONTEND_DIST / "index.html"
+    if react_index.is_file():
+        return FileResponse(react_index)
+    static_index = STATIC_DIR / "index.html"
+    if static_index.is_file():
+        return FileResponse(static_index)
     return {"message": "Try GET /search?q=your+query or POST /api/ask"}

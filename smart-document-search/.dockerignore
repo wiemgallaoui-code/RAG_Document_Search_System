@@ -28,3 +28,7 @@ chroma_db/
 # Tests not needed in runtime image (optional slimming)
 tests/
 pytest.ini
+
+# Frontend build artifacts (rebuilt in Docker multi-stage build)
+frontend/node_modules/
+frontend/dist/

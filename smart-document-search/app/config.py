@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCUMENTS_DIR = PROJECT_ROOT / "documents"
 STATIC_DIR = PROJECT_ROOT / "static"
+FRONTEND_DIST = PROJECT_ROOT / "frontend" / "dist"
 
 load_dotenv(PROJECT_ROOT / ".env")
 
