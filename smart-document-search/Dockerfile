@@ -19,6 +19,13 @@ ENV PIP_DEFAULT_TIMEOUT=1000 \
 
 RUN pip install --no-cache-dir --upgrade pip
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        tesseract-ocr \
+        tesseract-ocr-eng \
+        poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
 # CPU-only torch (~190MB) — no official pytorch/pytorch CPU image on Docker Hub
 RUN pip install --no-cache-dir \
     --default-timeout=1000 \

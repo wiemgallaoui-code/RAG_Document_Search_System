@@ -28,8 +28,7 @@ def test_load_documents_missing_folder_raises(tmp_path: Path):
 
 
 def test_load_documents_reads_pdf(tmp_path: Path, monkeypatch):
-    pdf_path = tmp_path / "rag_guide.pdf"
-    pdf_path.write_bytes(b"%PDF-1.4")
+    (tmp_path / "rag_guide.pdf").write_bytes(b"%PDF-1.4")
 
     monkeypatch.setattr(
         "app.document_loader._read_pdf",
@@ -50,3 +49,54 @@ def test_load_documents_skips_empty_pdf(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("app.document_loader._read_pdf", lambda _path: "   ")
 
     assert load_documents(tmp_path) == []
+
+
+def test_read_pdf_falls_back_to_ocr_when_text_missing(tmp_path: Path, monkeypatch):
+    pdf_path = tmp_path / "scan.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4")
+
+    monkeypatch.setattr("app.document_loader._extract_pdf_text", lambda _path: "")
+    monkeypatch.setattr(
+        "app.document_loader._ocr_pdf",
+        lambda _path: "Scanned document text recovered by OCR.",
+    )
+
+    from app.document_loader import _read_pdf
+
+    assert _read_pdf(pdf_path) == "Scanned document text recovered by OCR."
+
+
+def test_read_pdf_skips_ocr_when_disabled(tmp_path: Path, monkeypatch):
+    pdf_path = tmp_path / "scan.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4")
+
+    monkeypatch.setattr("app.document_loader.OCR_ENABLED", False)
+    monkeypatch.setattr("app.document_loader._extract_pdf_text", lambda _path: "")
+
+    def _ocr_should_not_run(_path):
+        raise AssertionError("OCR should not run when disabled")
+
+    monkeypatch.setattr("app.document_loader._ocr_pdf", _ocr_should_not_run)
+
+    from app.document_loader import _read_pdf
+
+    assert _read_pdf(pdf_path) == ""
+
+
+def test_read_pdf_prefers_embedded_text_over_ocr(tmp_path: Path, monkeypatch):
+    pdf_path = tmp_path / "mixed.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4")
+
+    monkeypatch.setattr(
+        "app.document_loader._extract_pdf_text",
+        lambda _path: "Embedded PDF text layer.",
+    )
+
+    def _ocr_should_not_run(_path):
+        raise AssertionError("OCR should not run when embedded text exists")
+
+    monkeypatch.setattr("app.document_loader._ocr_pdf", _ocr_should_not_run)
+
+    from app.document_loader import _read_pdf
+
+    assert _read_pdf(pdf_path) == "Embedded PDF text layer."

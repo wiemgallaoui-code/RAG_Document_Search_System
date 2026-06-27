@@ -1,7 +1,7 @@
 Campus Library Search — Frequently Asked Questions
 
 Q: What file types can I search?
-A: The demo indexes plain text (.txt) and PDF (.pdf) files in the documents folder.
+A: The demo indexes plain text (.txt) and PDF (.pdf) files. Scanned PDFs are read with OCR when Tesseract is available.
 
 Q: How does ranking work?
 A: The system converts documents and your question into TF-IDF vectors, then ranks files by cosine similarity. Higher scores mean more overlapping important terms.

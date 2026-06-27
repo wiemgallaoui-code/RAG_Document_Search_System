@@ -309,11 +309,50 @@ smart-document-search/
 
 ---
 
+## Scanned PDFs (OCR)
+
+Text-based PDFs work out of the box. **Scanned PDFs** (image-only pages) need OCR.
+
+| How you run | Extra install needed? |
+|-------------|------------------------|
+| **Docker** (`docker compose --profile lite up`) | No — Tesseract and Poppler are already in the image |
+| **Local Python** (`uvicorn …`) | Yes — only if you use scanned PDFs |
+
+**You do not need to install anything before `git push`.** Push uploads your code to GitHub only. OCR tools matter when you *run* the app locally with scanned PDFs.
+
+### Local setup (Windows)
+
+**1. Install system tools** (one-time):
+
+- **Tesseract OCR** (include German language data): [UB Mannheim Windows builds](https://github.com/UB-Mannheim/tesseract/wiki)
+- **Poppler** (for PDF → image): [poppler-windows releases](https://github.com/oschwartz10612/poppler-windows/releases) — add the `bin` folder to your PATH
+
+**2. Python packages** (already in `requirements.txt`):
+
+```bash
+pip install -r requirements.txt
+```
+
+**3. Configure `.env`** for German scanned PDFs:
+
+```env
+OCR_ENABLED=true
+OCR_LANG=deu
+```
+
+Use `OCR_LANG=deu+eng` for mixed German/English documents. Set `OCR_ENABLED=false` to skip OCR entirely.
+
+After adding or changing files in `documents/`, restart the API server so the index is rebuilt.
+
+---
+
 ## Notes
 
 - Never commit `.env` — it contains your API key (already in `.gitignore`)
 - Files named `README.txt` or `README.pdf` inside `documents/` are not indexed
-- Supported formats: `.txt` (UTF-8) and `.pdf` (text extracted via pypdf)
+- Supported formats: `.txt` (UTF-8) and `.pdf` (embedded text via pypdf, scanned pages via Tesseract OCR)
+- OCR needs **Tesseract** and **Poppler** installed locally on Windows/macOS/Linux when not using Docker; Docker images include them automatically
+- Disable OCR with `OCR_ENABLED=false`; set `OCR_LANG=deu` or `deu+eng` for German documents (see **Scanned PDFs (OCR)** above)
 - The `openai` Python package is used as a client for the Groq-compatible API
 
 ---

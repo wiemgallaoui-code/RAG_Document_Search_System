@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from app.config import OCR_ENABLED, OCR_LANG, PDF_OCR_DPI, PDF_OCR_MAX_PAGES
+
 SUPPORTED_EXTENSIONS = {".txt", ".pdf"}
 
 
@@ -16,7 +18,8 @@ def _read_txt(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _read_pdf(path: Path) -> str:
+def _extract_pdf_text(path: Path) -> str:
+    """Extract embedded text from a PDF using pypdf."""
     from pypdf import PdfReader
 
     reader = PdfReader(str(path))
@@ -28,6 +31,35 @@ def _read_pdf(path: Path) -> str:
     return "\n\n".join(parts).strip()
 
 
+def _ocr_pdf(path: Path) -> str:
+    """OCR scanned PDF pages when no embedded text is available."""
+    from pdf2image import convert_from_path
+    import pytesseract
+
+    images = convert_from_path(str(path), dpi=PDF_OCR_DPI)
+    if PDF_OCR_MAX_PAGES > 0:
+        images = images[:PDF_OCR_MAX_PAGES]
+
+    parts: list[str] = []
+    for image in images:
+        text = pytesseract.image_to_string(image, lang=OCR_LANG)
+        if text.strip():
+            parts.append(text.strip())
+    return "\n\n".join(parts).strip()
+
+
+def _read_pdf(path: Path) -> str:
+    text = _extract_pdf_text(path)
+    if text.strip():
+        return text
+    if not OCR_ENABLED:
+        return ""
+    try:
+        return _ocr_pdf(path)
+    except Exception:
+        return ""
+
+
 def load_documents(documents_dir: Path) -> list[dict[str, str]]:
     """Read all .txt and .pdf files in documents_dir.
 
@@ -36,6 +68,7 @@ def load_documents(documents_dir: Path) -> list[dict[str, str]]:
       - content: extracted text as a string
 
     Files named README.* are skipped (folder instructions, not search content).
+    PDFs without embedded text fall back to OCR (Tesseract) when enabled.
     Empty files and PDFs with no extractable text are skipped.
     """
     if not documents_dir.exists():
