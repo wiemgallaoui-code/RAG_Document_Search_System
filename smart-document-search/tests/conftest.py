@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from app.chunking import chunk_documents
@@ -41,6 +42,31 @@ def documents_dir(tmp_path: Path, sample_documents: list[dict[str, str]]) -> Pat
     return tmp_path
 
 
+class FakeEmbeddingModel:
+    """Deterministic embeddings for hybrid retrieval tests (no model download)."""
+
+    def __init__(self, *_args, **_kwargs) -> None:
+        self._model_name = "fake-test-model"
+
+    @property
+    def model_name(self) -> str:
+        return self._model_name
+
+    def encode(self, texts: list[str], *, batch_size: int = 32) -> np.ndarray:
+        if not texts:
+            return np.empty((0, 8), dtype=np.float32)
+        vectors = []
+        for text in texts:
+            seed = sum(ord(c) for c in text) % 1000
+            vec = np.array([(seed + i) / 1000.0 for i in range(8)], dtype=np.float32)
+            vec /= np.linalg.norm(vec) + 1e-9
+            vectors.append(vec)
+        return np.stack(vectors)
+
+    def encode_query(self, query: str) -> np.ndarray:
+        return self.encode([query])[0]
+
+
 @pytest.fixture
 def tfidf_retriever(tmp_path: Path, sample_documents: list[dict[str, str]], monkeypatch):
     """HybridRetriever using TF-IDF only (no embedding model load in tests)."""
@@ -55,4 +81,17 @@ def tfidf_retriever(tmp_path: Path, sample_documents: list[dict[str, str]], monk
     retriever = HybridRetriever()
     retriever.fit(chunks)
     assert retriever.retrieval_method == "TF-IDF (fallback)"
+    return retriever
+
+
+@pytest.fixture
+def hybrid_retriever(tmp_path: Path, sample_documents: list[dict[str, str]], monkeypatch):
+    """HybridRetriever with mocked embeddings and real ChromaDB on a temp path."""
+    monkeypatch.setattr("app.retrieval.CHROMA_DIR", tmp_path / "chroma_hybrid")
+    monkeypatch.setattr("app.retrieval.EmbeddingModel", FakeEmbeddingModel)
+
+    chunks = chunk_documents(sample_documents, chunk_size=120, overlap=20)
+    retriever = HybridRetriever()
+    retriever.fit(chunks)
+    assert retriever.retrieval_method == "Hybrid (Embeddings + TF-IDF)"
     return retriever

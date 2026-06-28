@@ -27,6 +27,21 @@ def test_load_documents_missing_folder_raises(tmp_path: Path):
         load_documents(missing)
 
 
+def test_load_documents_non_directory_raises(tmp_path: Path):
+    file_path = tmp_path / "not_a_dir.txt"
+    file_path.write_text("content", encoding="utf-8")
+    with pytest.raises(NotADirectoryError):
+        load_documents(file_path)
+
+
+def test_should_skip_readme_variants():
+    from app.document_loader import _should_skip
+
+    assert _should_skip(Path("README.txt")) is True
+    assert _should_skip(Path("readme.pdf")) is True
+    assert _should_skip(Path("notes.txt")) is False
+
+
 def test_load_documents_reads_pdf(tmp_path: Path, monkeypatch):
     (tmp_path / "rag_guide.pdf").write_bytes(b"%PDF-1.4")
 

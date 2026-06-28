@@ -169,10 +169,12 @@ Open **http://127.0.0.1:8000**.
 ```bash
 cd smart-document-search
 pip install -r requirements.txt
-python -m pytest -v
+python -m pytest
 ```
 
-Tests cover document loading, preprocessing, chunk retrieval, and `POST /api/ask` with a mocked LLM (no real API calls).
+**61 automated tests** (Unit + Integration + API) with **≥ 80% code coverage** (`pytest-cov`). Tests cover document loading, chunking, TF-IDF/hybrid retrieval, RAG answer generation, and all API endpoints — LLM and embedding models are mocked (no API keys or model downloads in CI).
+
+See [`smart-document-search/TEST_PLAN.md`](smart-document-search/TEST_PLAN.md) for the full test strategy. CI runs on every push/PR via GitHub Actions (`.github/workflows/ci.yml`).
 
 ---
 
